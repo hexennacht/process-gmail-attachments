@@ -24,8 +24,13 @@ func Serve(conf *config.Configuration) {
 	})
 
 	oauthConfig := pkg.NewOauth2Config(conf.GoogleClientID, conf.GoogleClientSecret, conf.GoogleOAuth2RedirectURL)
+	gmailService, err := newGmailService(conf)
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	handler.RegisterLoginHandler(app, oauthConfig, pkg.RandomString(pkg.DefaultRandomStringLength), conf.GoogleOAuth2TokenFile)
+	handler.RegisterMessageHandler(app, gmailService)
 
 	log.Fatalln(app.Listen(conf.BaseURL))
 }
