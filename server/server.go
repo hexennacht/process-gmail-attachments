@@ -2,14 +2,16 @@ package server
 
 import (
 	"context"
+	"log"
+
 	"github.com/gofiber/fiber/v2"
-	"github.com/hexennacht/process-gmail-attachments/config"
-	"github.com/hexennacht/process-gmail-attachments/handler"
-	"github.com/hexennacht/process-gmail-attachments/pkg"
 	jsoniter "github.com/json-iterator/go"
 	"google.golang.org/api/gmail/v1"
 	"google.golang.org/api/option"
-	"log"
+
+	"github.com/hexennacht/process-gmail-attachments/config"
+	"github.com/hexennacht/process-gmail-attachments/handler"
+	"github.com/hexennacht/process-gmail-attachments/pkg"
 )
 
 func Serve(conf *config.Configuration) {
@@ -41,8 +43,6 @@ func newServer(conf *config.Configuration) *fiber.App {
 
 func newGmailService(conf *config.Configuration) (*gmail.Service, error) {
 	httpClient := option.WithHTTPClient(pkg.NewOauth2Client(conf.GoogleOAuth2TokenFile))
-
-	oauthConfig := pkg.NewOauth2Config(conf.GoogleClientID, conf.GoogleClientSecret, conf.GoogleOAuth2RedirectURL)
 
 	return gmail.NewService(context.Background(), httpClient)
 }

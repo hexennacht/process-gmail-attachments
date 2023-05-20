@@ -1,10 +1,12 @@
 package handler
 
 import (
-	"github.com/gofiber/fiber/v2"
-	"github.com/hexennacht/process-gmail-attachments/pkg"
 	"golang.org/x/oauth2"
 	"net/http"
+
+	"github.com/gofiber/fiber/v2"
+
+	"github.com/hexennacht/process-gmail-attachments/pkg"
 )
 
 type loginHandler struct {
