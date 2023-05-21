@@ -1,5 +1,7 @@
 .idea
 .vscode
 .fleet
+vendor
 
 .env
+keys.json

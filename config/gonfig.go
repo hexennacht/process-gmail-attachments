@@ -8,7 +8,7 @@ type Configuration struct {
 	BaseURL string `envconfig:"BASE_URL" default:"127.0.0.1:8080"`
 
 	DatabaseURL string `envconfig:"DATABASE_URL" default:"postgresql://user:password@127.0.0.1:5432/gmail_attachments"`
-	RedisURL    string `envconfig:"REDIS_URL" default:"redis://localhost:6379"`
+	RedisURL    string `envconfig:"REDIS_URL" default:"localhost:6379"`
 
 	GoogleClientID          string `envconfig:"GOOGLE_CLIENT_ID" default:""`
 	GoogleClientSecret      string `envconfig:"GOOGLE_CLIENT_SECRET" default:""`

@@ -2,22 +2,26 @@ package server
 
 import (
 	"context"
+	"github.com/hexennacht/process-gmail-attachments/handler/queue"
 	"log"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/hibiken/asynq"
 	jsoniter "github.com/json-iterator/go"
 	"google.golang.org/api/gmail/v1"
 	"google.golang.org/api/option"
 
 	"github.com/hexennacht/process-gmail-attachments/config"
-	"github.com/hexennacht/process-gmail-attachments/handler"
+	"github.com/hexennacht/process-gmail-attachments/core/module/message"
+	"github.com/hexennacht/process-gmail-attachments/handler/http"
 	"github.com/hexennacht/process-gmail-attachments/pkg"
 )
 
 func Serve(conf *config.Configuration) {
-	app := newServer(conf)
+	httpServer := newHttpServer(conf)
+	queueServer := newQueueServer(conf.RedisURL)
 
-	app.Get("/_health", func(ctx *fiber.Ctx) error {
+	httpServer.Get("/_health", func(ctx *fiber.Ctx) error {
 		return ctx.JSON(fiber.Map{
 			"message": "success",
 		})
@@ -29,13 +33,25 @@ func Serve(conf *config.Configuration) {
 		log.Fatalln(err)
 	}
 
-	handler.RegisterLoginHandler(app, oauthConfig, pkg.RandomString(pkg.DefaultRandomStringLength), conf.GoogleOAuth2TokenFile)
-	handler.RegisterMessageHandler(app, gmailService)
+	messageSvc := message.NewModule(gmailService, conf.GoogleEmail)
 
-	log.Fatalln(app.Listen(conf.BaseURL))
+	http.RegisterLoginHandler(httpServer, oauthConfig, pkg.RandomString(pkg.DefaultRandomStringLength), conf.GoogleOAuth2TokenFile)
+	http.RegisterMessageHandler(httpServer, messageSvc)
+
+	go func() {
+		mux := asynq.NewServeMux()
+
+		queue.RegisterMessageHandler(mux, oauthConfig, messageSvc)
+
+		if err := queueServer.Run(mux); err != nil {
+			log.Fatalf("could not run server: %v", err)
+		}
+	}()
+
+	log.Fatalln(httpServer.Listen(conf.BaseURL))
 }
 
-func newServer(conf *config.Configuration) *fiber.App {
+func newHttpServer(conf *config.Configuration) *fiber.App {
 	return fiber.New(fiber.Config{
 		Prefork:           true,
 		AppName:           conf.AppName,
@@ -44,6 +60,25 @@ func newServer(conf *config.Configuration) *fiber.App {
 		EnablePrintRoutes: true,
 		ColorScheme:       fiber.DefaultColors,
 	})
+}
+
+func newQueueServer(redisAddr string) *asynq.Server {
+	return asynq.NewServer(
+		asynq.RedisClientOpt{
+			Addr: redisAddr,
+		},
+		asynq.Config{
+			// Specify how many concurrent workers to use
+			Concurrency: 10,
+			// Optionally specify multiple queues with different priority.
+			Queues: map[string]int{
+				"critical": 6,
+				"default":  3,
+				"low":      1,
+			},
+			// See the godoc for other configuration options
+		},
+	)
 }
 
 func newGmailService(conf *config.Configuration) (*gmail.Service, error) {
