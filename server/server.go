@@ -20,6 +20,7 @@ import (
 func Serve(conf *config.Configuration) {
 	httpServer := newHttpServer(conf)
 	queueServer := newQueueServer(conf.RedisURL)
+	queueClient := asynq.NewClient(&asynq.RedisClientOpt{Addr: conf.RedisURL})
 
 	httpServer.Get("/_health", func(ctx *fiber.Ctx) error {
 		return ctx.JSON(fiber.Map{
@@ -33,7 +34,7 @@ func Serve(conf *config.Configuration) {
 		log.Fatalln(err)
 	}
 
-	messageSvc := message.NewModule(gmailService, conf.GoogleEmail)
+	messageSvc := message.NewModule(gmailService, queueClient, conf.GoogleEmail)
 
 	http.RegisterLoginHandler(httpServer, oauthConfig, pkg.RandomString(pkg.DefaultRandomStringLength), conf.GoogleOAuth2TokenFile)
 	http.RegisterMessageHandler(httpServer, messageSvc)
@@ -72,11 +73,12 @@ func newQueueServer(redisAddr string) *asynq.Server {
 			Concurrency: 10,
 			// Optionally specify multiple queues with different priority.
 			Queues: map[string]int{
-				"critical": 6,
-				"default":  3,
-				"low":      1,
+				pkg.TaskQueueCritical: 6,
+				pkg.TaskQueueDefault:  3,
+				pkg.TaskQueueLow:      1,
 			},
 			// See the godoc for other configuration options
+			LogLevel: asynq.ErrorLevel,
 		},
 	)
 }

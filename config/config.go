@@ -13,7 +13,7 @@ type Configuration struct {
 	GoogleClientID          string `envconfig:"GOOGLE_CLIENT_ID" default:""`
 	GoogleClientSecret      string `envconfig:"GOOGLE_CLIENT_SECRET" default:""`
 	GoogleOAuth2RedirectURL string `envconfig:"GOOGLE_OAUTH2_REDIRECT_URL" default:""`
-	GoogleOAuth2TokenFile   string `envconfig:"GOOGLE_OAUTH2_TOKEN_FILE" default:""`
+	GoogleOAuth2TokenFile   string `envconfig:"GOOGLE_OAUTH2_TOKEN_FILE" default:"./keys.json"`
 	GoogleEmail             string `envconfig:"GOOGLE_EMAIL" default:"me"`
 
 	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
