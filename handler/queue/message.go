@@ -24,6 +24,7 @@ type messageHandler struct {
 func RegisterMessageHandler(app *asynq.ServeMux, oauthConfig *oauth2.Config, messageService messageModule.Module) {
 	handler := newMessageHandler(app, oauthConfig, messageService)
 	handler.app.HandleFunc(pkg.TaskProcessMessageList, handler.ProcessMessagesList)
+	handler.app.HandleFunc(pkg.TaskProcessMessageAttachment, handler.ProcessMessageAttachment)
 }
 
 func newMessageHandler(app *asynq.ServeMux, oauthConfig *oauth2.Config, messageService messageModule.Module) *messageHandler {
@@ -31,13 +32,27 @@ func newMessageHandler(app *asynq.ServeMux, oauthConfig *oauth2.Config, messageS
 }
 
 func (m *messageHandler) ProcessMessagesList(ctx context.Context, t *asynq.Task) error {
-	var req *entity.TaskProcessMessageListRequest
+	var req *entity.TaskFetchMessageFromListRequest
 
 	if err := jsoniter.Unmarshal(t.Payload(), &req); err != nil {
 		return err
 	}
 
-	if err := m.messageService.ProcessMessageListToFetchAttachments(ctx, req); err != nil {
+	if err := m.messageService.FetchMessageFromList(ctx, req); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *messageHandler) ProcessMessageAttachment(ctx context.Context, t *asynq.Task) error {
+	var req *entity.TaskFetchMessageFromListRequest
+
+	if err := jsoniter.Unmarshal(t.Payload(), &req); err != nil {
+		return err
+	}
+
+	if err := m.messageService.FetchMessageFromList(ctx, req); err != nil {
 		return err
 	}
 

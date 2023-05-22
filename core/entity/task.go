@@ -2,12 +2,12 @@ package entity
 
 import "google.golang.org/api/gmail/v1"
 
-type TaskProcessMessageListRequest struct {
+type TaskFetchMessageFromListRequest struct {
 	*ReadFromRequest
 	Messages *gmail.ListMessagesResponse
 }
 
-type TaskProcessMessageAttachmentRequest struct {
+type TaskFetchAttachmentFromMessageRequest struct {
 	MessageID    string
 	AttachmentID string
 }

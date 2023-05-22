@@ -15,7 +15,8 @@ import (
 type Module interface {
 	ReadFrom(ctx context.Context, req *entity.ReadFromRequest) error
 
-	ProcessMessageListToFetchAttachments(ctx context.Context, req *entity.TaskProcessMessageListRequest) error
+	FetchMessageFromList(ctx context.Context, req *entity.TaskFetchMessageFromListRequest) error
+	FetchAttachmentFromMessage(ctx context.Context, req *entity.TaskFetchAttachmentFromMessageRequest) error
 }
 
 type module struct {
@@ -44,7 +45,7 @@ func (m *module) ReadFrom(ctx context.Context, req *entity.ReadFromRequest) erro
 		return err
 	}
 
-	err = m.createTaskDefaultPriority(ctx, pkg.TaskProcessMessageList, &entity.TaskProcessMessageListRequest{
+	err = m.createTaskDefaultPriority(ctx, pkg.TaskProcessMessageList, &entity.TaskFetchMessageFromListRequest{
 		ReadFromRequest: req,
 		Messages:        listMessage,
 	})
@@ -55,7 +56,7 @@ func (m *module) ReadFrom(ctx context.Context, req *entity.ReadFromRequest) erro
 	return nil
 }
 
-func (m *module) ProcessMessageListToFetchAttachments(ctx context.Context, req *entity.TaskProcessMessageListRequest) error {
+func (m *module) FetchMessageFromList(ctx context.Context, req *entity.TaskFetchMessageFromListRequest) error {
 	for _, msg := range req.Messages.Messages {
 		message, err := m.gmailService.Users.Messages.Get(m.userID, msg.Id).Do()
 		if err != nil {
@@ -94,6 +95,11 @@ func (m *module) ProcessMessageListToFetchAttachments(ctx context.Context, req *
 	return nil
 }
 
+func (m *module) FetchAttachmentFromMessage(ctx context.Context, req *entity.TaskFetchAttachmentFromMessageRequest) error {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (m *module) queueMessageAttachments(ctx context.Context, message *gmail.Message) error {
 	for _, attachment := range message.Payload.Parts {
 		if !m.allowedMimeType[attachment.MimeType] {
@@ -101,7 +107,7 @@ func (m *module) queueMessageAttachments(ctx context.Context, message *gmail.Mes
 			continue
 		}
 
-		err := m.createTaskDefaultPriority(ctx, pkg.TaskProcessMessageAttachment, &entity.TaskProcessMessageAttachmentRequest{
+		err := m.createTaskDefaultPriority(ctx, pkg.TaskProcessMessageAttachment, &entity.TaskFetchAttachmentFromMessageRequest{
 			MessageID:    message.Id,
 			AttachmentID: attachment.Body.AttachmentId,
 		})
