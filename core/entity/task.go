@@ -6,3 +6,8 @@ type TaskProcessMessageListRequest struct {
 	*ReadFromRequest
 	Messages *gmail.ListMessagesResponse
 }
+
+type TaskProcessMessageAttachmentRequest struct {
+	MessageID    string
+	AttachmentID string
+}
