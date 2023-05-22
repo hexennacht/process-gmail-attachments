@@ -2,6 +2,8 @@ package queue
 
 import (
 	"context"
+	"github.com/hexennacht/process-gmail-attachments/core/entity"
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/hibiken/asynq"
 	"golang.org/x/oauth2"
@@ -29,6 +31,15 @@ func newMessageHandler(app *asynq.ServeMux, oauthConfig *oauth2.Config, messageS
 }
 
 func (m *messageHandler) ProcessMessagesList(ctx context.Context, t *asynq.Task) error {
+	var req *entity.TaskProcessMessageListRequest
+
+	if err := jsoniter.Unmarshal(t.Payload(), &req); err != nil {
+		return err
+	}
+
+	if err := m.messageService.ProcessMessageListToFetchAttachments(ctx, req); err != nil {
+		return err
+	}
 
 	return nil
 }
